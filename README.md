@@ -118,7 +118,7 @@ Leveraging Kyo's `Seqs` effect allows greater control over composing and handlin
 
 ### Dependency injection
 
-Kyo does not yet have a `provide` macro that can reliably construct a dependency graph from a collection of constructors like ZIO does. Kyo's `.provide` will simply provide a dependency, removing from the `Envs` intersection, and must be called multiple times to handle all the dependencies. Use `provideAs` to ensure the type of the dependency is widened to the required type when providing an implementation of an abstract service.
+Kyo does not yet have a `provide` macro that can reliably construct a dependency graph from a collection of constructors like ZIO does. Kyo's `.provide` will provide only a single dependency, removing from the `Envs` intersection. It must be called multiple times to handle all the dependencies. Use `provideAs` to ensure the type of the dependency is widened to the required type when providing an implementation of an abstract service.
 
 ## Acknowledgements
 
