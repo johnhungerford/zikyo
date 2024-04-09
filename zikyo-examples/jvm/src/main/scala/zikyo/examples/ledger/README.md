@@ -1,1 +1,1 @@
-This example is from a performance benchmark challenge designed to process financial transactions with relaxed durability. Requests are handled directly in memory using shared mapped files between the API instances, and the transaction log is written asynchronously.
+The example in this package is taken directly from the kyo repository and refactored to use zikyo where applicable. The original example [can be found here](https://github.com/getkyo/kyo/tree/main/kyo-examples/jvm/src/main/scala/kyo/examples/ledger).
