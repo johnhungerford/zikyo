@@ -1,7 +1,5 @@
 # ZiKyo
 
-<img src="https://raw.githubusercontent.com/getkyo/kyo/master/kyo.png" width="200" alt="Kyo">
-
 ### Introduction
 
 ZiKyo provides a ZIO-like API for the algebraic effects library [Kyo](https://getkyo.io), allowing users who are used to ZIO to construct and manipulate Kyo effects in a more familiar way.
