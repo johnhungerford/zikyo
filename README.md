@@ -44,8 +44,8 @@ trait HelloService:
 	def sayHelloTo(saluee: String): Unit < (IOs & Aborts[Throwable])
 
 object HelloService:
-	object Live extends HelloService:
-	    override def sayHelloTo(saluee: String): Unit < (Consoles & Aborts[Throwable]) =
+    object Live extends HelloService:
+        override def sayHelloTo(saluee: String): Unit < (Consoles & Aborts[Throwable]) =
             KYO.attempt {                           // Adds Aborts[Throwable] effect
                 Consoles.println(s"Hello $saluee!") // Adds Consoles effect
 			}
