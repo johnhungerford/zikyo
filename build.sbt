@@ -56,7 +56,6 @@ lazy val `zikyo-settings` = Seq(
 lazy val zikyo =
     crossProject(JVMPlatform)
         .in(file("."))
-        .disablePlugins(CiReleasePlugin, MdocPlugin)
         .settings(
             name                                   := "zikyo",
             organization                           := "io.github.johnhungerford",
