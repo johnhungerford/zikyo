@@ -27,6 +27,12 @@ Whenever possible the names of ZiKyo methods are the same as the corresponding m
 
 ### Getting Started
 
+Add the following line to build.sbt:
+
+```sbt
+libraryDependencies += "io.github.johnhungerford" %% "zikyo-core" % "<version>"
+```
+
 To use the zikyo API, add the following import statement
 
 ```scala 
