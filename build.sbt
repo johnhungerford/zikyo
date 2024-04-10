@@ -20,8 +20,9 @@ val kyoVersion = "0.9.1"
 
 scalaVersion                       := scala3Version
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
+sonatypeProfileName                := "io.github.johnhungerford"
 sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
-sonatypeProfileName                := "io.getkyo"
+
 publish / skip                     := true
 
 lazy val `zikyo-settings` = Seq(
@@ -30,7 +31,8 @@ lazy val `zikyo-settings` = Seq(
     crossScalaVersions := List(scala3Version),
     scalacOptions ++= compilerOptions,
     scalafmtOnCompile := true,
-    organization      := "io.getkyo",
+    organization := "io.github.johnhungerford",
+    organizationName := "johnhungerford",
     homepage          := Some(url("https://getkyo.io")),
     licenses          := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     developers := List(
@@ -54,9 +56,10 @@ lazy val `zikyo-settings` = Seq(
 lazy val zikyo =
     crossProject(JVMPlatform)
         .in(file("."))
+        .disablePlugins(CiReleasePlugin, MdocPlugin)
         .settings(
             name                                   := "zikyo",
-            organization                           := "io.getkyo",
+            organization                           := "io.github.johnhungerford",
             publishArtifact                        := false,
             publish / skip                         := true,
             Compile / packageBin / publishArtifact := false,
@@ -74,6 +77,7 @@ lazy val `zikyo-core` =
         .withoutSuffixFor(JVMPlatform)
         .crossType(CrossType.Full)
         .in(file("zikyo-core"))
+        .disablePlugins(CiReleasePlugin, MdocPlugin)
         .settings(
             `zikyo-settings`,
 			libraryDependencies += "org.scalatest" %%% "scalatest"       % "3.2.16"     % Test,
