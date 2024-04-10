@@ -523,14 +523,15 @@ package object zikyo:
             t: Tag[Envs[E1]]
         ): A < (S & S1 & SR) =
             dependency.map(d => Envs[E1].run[A, S, E, SR](d)(effect))
-            
+
         def provideAs[E1](
             using
             f: Flat[A < (S & Envs[E])],
             t: Tag[Envs[E1]],
-            he: HasEnvs[E1, E],
+            he: HasEnvs[E1, E]
         ): ProvideAsPartiallyApplied[A, S, E, E1, he.Remainder] =
             ProvideAsPartiallyApplied(effect)
+    end extension
 
     extension [A, S](effect: A < (S & Seqs))
         def filterSeqs[S1](fn: A => Boolean < S1): A < (S & S1 & Seqs) =
@@ -629,7 +630,6 @@ package object zikyo:
     extension [A, S](effect: A < (S & Consoles))
         def provideDefaultConsole: A < (S & IOs) = Consoles.run(effect)
 
-    
     final class ProvideAsPartiallyApplied[A, S, E, E1, ER](
         effect: A < (S & Envs[E])
     )(
@@ -640,4 +640,5 @@ package object zikyo:
     ):
         def apply[S1](dependency: E1 < S1): A < (S & S1 & ER) =
             dependency.map(d => Envs[E1].run(d)(effect))
+    end ProvideAsPartiallyApplied
 end zikyo
