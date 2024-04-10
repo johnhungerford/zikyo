@@ -53,18 +53,22 @@ lazy val `zikyo-settings` = Seq(
     libraryDependencies += "io.getkyo" %%% "kyo-core" % kyoVersion,
 )
 
+lazy val skipPublish = Seq(
+    publishArtifact                        := false,
+    publish / skip                         := true,
+    Compile / packageBin / publishArtifact := false,
+    Compile / packageDoc / publishArtifact := false,
+    Compile / packageSrc / publishArtifact := false,
+)
+
 lazy val zikyo =
     crossProject(JVMPlatform)
         .in(file("."))
         .settings(
             name                                   := "zikyo",
             organization                           := "io.github.johnhungerford",
-            publishArtifact                        := false,
-            publish / skip                         := true,
-            Compile / packageBin / publishArtifact := false,
-            Compile / packageDoc / publishArtifact := false,
-            Compile / packageSrc / publishArtifact := false,
             scalaVersion                           := scala3Version,
+            skipPublish,
             `zikyo-settings`
         ).aggregate(
             `zikyo-core`,
@@ -76,7 +80,6 @@ lazy val `zikyo-core` =
         .withoutSuffixFor(JVMPlatform)
         .crossType(CrossType.Full)
         .in(file("zikyo-core"))
-        .disablePlugins(CiReleasePlugin, MdocPlugin)
         .settings(
             `zikyo-settings`,
 			libraryDependencies += "org.scalatest" %%% "scalatest"       % "3.2.16"     % Test,
@@ -91,12 +94,13 @@ lazy val `zikyo-examples` =
         .dependsOn(`zikyo-core`)
         .in(file("zikyo-examples"))
         .settings(
-            `zikyo-settings`,
             Compile / doc / sources                              := Seq.empty,
             libraryDependencies += "com.softwaremill.sttp.tapir" %% "tapir-json-zio" % "1.10.0",
             libraryDependencies += "io.getkyo" %% "kyo-direct" % kyoVersion,
             libraryDependencies += "io.getkyo" %% "kyo-os-lib" % kyoVersion,
             libraryDependencies += "io.getkyo" %% "kyo-tapir" % kyoVersion,
+            skipPublish,
+            `zikyo-settings`,
         )
 
 import org.scalajs.jsenv.nodejs.*
