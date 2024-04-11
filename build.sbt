@@ -99,6 +99,11 @@ lazy val `zikyo-examples` =
             libraryDependencies += "io.getkyo" %% "kyo-direct" % kyoVersion,
             libraryDependencies += "io.getkyo" %% "kyo-os-lib" % kyoVersion,
             libraryDependencies += "io.getkyo" %% "kyo-tapir" % kyoVersion,
+            fork := true,
+            javaOptions ++= Seq(
+                "--add-opens=java.base/java.nio=ALL-UNNAMED",
+                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+            ),
             skipPublish,
             `zikyo-settings`,
         )

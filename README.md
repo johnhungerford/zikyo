@@ -2,12 +2,15 @@
 
 ### Introduction
 
+[![Build Status](https://github.com/johnhungerford/zikyo/workflows/test/badge.svg)](https://github.com/johnhungerford/zikyo/actions)
+[![Version](img.shields.io/maven-central/v/io.github.johnhungerford/zikyo-core_3)](https://search.maven.org/search?q=g:io.github.johnhungerford%20a:zikyo)
+
 ZiKyo provides a ZIO-like API for the algebraic effects library [Kyo](https://getkyo.io), allowing users who are used to ZIO to construct and manipulate Kyo effects in a more familiar way.
 
 For ZIO users, Kyo's API can be frustrating for three reasons:
 1. Kyo provides a minimal API by design. 
 
-While its uncluttered namespaces make it more approachable to beginners, it provides few of those abstractions for manipulating effects to which ZIO users get addicted.
+While its uncluttered namespaces make it more approachable for beginners, users who are addicted to ZIO's powerful and intuitive combinators will likely find it unwieldy and possibly not worth the effort.
 
 2. Kyo effects are handled by functions that take effects as arguments, rather by methods on effects.
 
@@ -20,10 +23,10 @@ Being more modular that ZIO, Kyo segregates its effect types more cleanly than Z
 ---
 
 ZiKyo answers these frustrations by providing:
-1. A single object `KYO` with a bunch of factory methods for Kyo effects styled after the ones that can be found on `ZIO`
-2. Extension methods on Kyo effects modeled after ZIO combinators.
+1. A single object `KYO` with a bunch of factory methods for many of the core Kyo effect types styled after the ones that can be found on `ZIO`
+2. Extension methods on Kyo effects modeled on ZIO combinators.
 
-Whenever possible the names of ZiKyo methods are the same as the corresponding methods in ZIO. When this is not possible or doesn't make sense, ZiKyo tries to keep as close to the ZIO convention as possible.
+Whenever possible the names of ZiKyo methods are the same as the corresponding methods in ZIO. When this is not possible or doesn't make sense, ZiKyo tries to keep as close to ZIO conventions as possible.
 
 ### Getting Started
 
@@ -85,7 +88,7 @@ IOs.run {                                                 // Handles IOs
 
 ### Failure conversions
 
-One notable departure from the ZIO API worth calling out is the inclusion of a collection of combinators for converting between failure effects. Whereas ZIO has a single channel for describing failable effects, Kyo has at least three different types that can describe failure in the basic sense of "short-cutting": `Aborts`, `Options`, and `Seqs` (an empty `Seq` being equivalent to a shortcut). It's useful to be able to move between these effects easily, so ZiKyo provides a number of extension methods, usually in some version of the form `def effect1ToEffect2`.
+One notable departure from the ZIO API worth calling out is a set of combinators for converting between failure effects. Whereas ZIO has a single channel for describing errors, Kyo has at least three different effect types that can describe failure in the basic sense of "short-circuiting": `Aborts`, `Options`, and `Seqs` (an empty `Seq` being equivalent to a short-circuit). It's useful to be able to move between these effects easily, so ZiKyo provides a number of extension methods, usually in the form of `def effect1ToEffect2`.
 
 Some examples:
 
@@ -101,7 +104,7 @@ val seqsEffect: Int < Seqs = optionsEffect.optionsToSeqs
 // Fails with Nil#head exception if empty and succeeds with Seq.head if non-empty
 val newAbortsEffect: Int < Aborts[Throwable] = seqsEffect.seqsToThrowable
 
-// Just throw any throwable exceptions
+// Throws a throwable Aborts failure
 val unsafeEffect: Int < Any = newAbortsEffect.implicitThrowable
 
 // Catch any thrown exceptions
@@ -137,4 +140,3 @@ License
 -------
 
 See the [LICENSE](https://github.com/getkyo/kyo/blob/master/LICENSE.txt) file for details.
- 
