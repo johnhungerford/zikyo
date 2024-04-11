@@ -3,7 +3,7 @@
 ### Introduction
 
 [![Build Status](https://github.com/johnhungerford/zikyo/workflows/test/badge.svg)](https://github.com/johnhungerford/zikyo/actions)
-[![Version](img.shields.io/maven-central/v/io.github.johnhungerford/zikyo-core_3)](https://search.maven.org/search?q=g:io.github.johnhungerford%20a:zikyo)
+[![Version](https://img.shields.io/maven-central/v/io.github.johnhungerford/zikyo-core_3)](https://search.maven.org/search?q=g:io.github.johnhungerford%20a:zikyo)
 
 ZiKyo provides a ZIO-like API for the algebraic effects library [Kyo](https://getkyo.io), allowing users who are used to ZIO to construct and manipulate Kyo effects in a more familiar way.
 
