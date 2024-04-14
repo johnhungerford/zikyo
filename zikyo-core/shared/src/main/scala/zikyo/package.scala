@@ -236,6 +236,12 @@ package object zikyo:
         def as[A1, S1](value: => A1 < S1): A1 < (S & S1) =
             effect.map(_ => value)
 
+        def debug: A < (S & IOs) =
+            effect.tap(value => Console.default.println(value.toString))
+
+        def debug(prefix: => String): A < (S & IOs) =
+            effect.tap(value => Console.default.println(s"$prefix: $value"))
+
         def delayed[S1](duration: Duration < S1): A < (S & S1 & Fibers) =
             KYO.sleep(duration) *> effect
 
@@ -331,6 +337,10 @@ package object zikyo:
 
         def explicitThrowable: A < (S & Aborts[Throwable]) =
             Aborts[Throwable].catching(effect)
+
+        def tap[S1](f: A => Any < S1): A < (S & S1) =
+            effect.map(a => f(a).as(a))
+
     end extension
 
     extension [A, S, E](effect: A < (S & Aborts[E]))

@@ -13,6 +13,18 @@ class effectsTest extends ZiKyoTest:
             assert(handled.pure == "hello")
         }
 
+        "debug" in {
+            val effect  = IOs("Hello World").debug
+            val handled = IOs.run(effect)
+            assert(handled.pure == "Hello World")
+        }
+
+        "debug(prefix)" in {
+            val effect  = IOs(true).debug("boolean")
+            val handled = IOs.run(effect)
+            assert(handled.pure == true)
+        }
+
         "discard" in {
             val effect          = IOs(23)
             val effectDiscarded = effect.discard
@@ -56,6 +68,12 @@ class effectsTest extends ZiKyoTest:
             state = true
             val handledEffectWhen2 = IOs.run(Options.run(effectWhen))
             assert(handledEffectWhen2.pure == Some(false))
+        }
+
+        "tap" in {
+            val effect: Int < IOs = IOs(42).tap(v => assert(42 == v))
+            val handled           = IOs.run(effect)
+            assert(handled.pure == 42)
         }
     }
 end effectsTest
