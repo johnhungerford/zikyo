@@ -80,11 +80,8 @@ package object zikyo:
         def fromAutoCloseable[A <: AutoCloseable, S](closeable: => A < S): A < (S & Resources) =
             acquireRelease(closeable)(c => IOs(c.close()))
 
-        def fromEither[E, A](either: Either[E, A])(using Tag[Aborts[E]]): A < (Aborts[E]) =
-            val aborts = Aborts[E]
-            println("HI")
-            aborts.get(either)
-        end fromEither
+        def fromEither[E, A](either: Either[E, A])(using Tag[Aborts[E]]): A < Aborts[E] =
+            Aborts[E].get(either)
 
         def fromFuture[A: Flat, S](future: => Future[A] < S): A < (S & Fibers) =
             future.map(f => Fibers.fromFuture(f))
@@ -340,6 +337,9 @@ package object zikyo:
 
         def tap[S1](f: A => Any < S1): A < (S & S1) =
             effect.map(a => f(a).as(a))
+
+        def unless[S1](condition: Boolean < S1): A < (S & S1 & Options) =
+            condition.map(c => if c then Options.empty else effect)
 
     end extension
 
