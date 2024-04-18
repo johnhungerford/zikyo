@@ -70,6 +70,22 @@ class effectsTest extends ZiKyoTest:
             assert(handledEffectWhen2.pure == Some(false))
         }
 
+        "unless" in {
+            val effect = IOs("value").unless(Envs[Boolean].get)
+
+            def runEffect(b: Boolean) =
+                IOs.run {
+                    Envs[Boolean].run(b) {
+                        Options.run {
+                            effect
+                        }
+                    }
+                }.pure
+
+            assert(runEffect(true) == None)
+            assert(runEffect(false) == Some("value"))
+        }
+
         "tap" in {
             val effect: Int < IOs = IOs(42).tap(v => assert(42 == v))
             val handled           = IOs.run(effect)
