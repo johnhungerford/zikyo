@@ -3,74 +3,74 @@ package zikyoTest
 import kyo.*
 import zikyo.*
 
-class seqsTest extends ZiKyoTest:
+class choicesTest extends ZiKyoTest:
 
-    "seqs" - {
+    "choices" - {
         "construct" - {
-            "should construct from a sequence" in {
+            "should construct choices from a sequence" in {
                 val effect = KYO.fromSeq(Seq(1, 2, 3))
-                assert(Seqs.run(effect) == Seq(1, 2, 3))
+                assert(Choices.run(effect) == Seq(1, 2, 3))
             }
         }
 
         "handle" - {
             "should handle" in {
-                val effect: Int < Seqs = Seqs.get(Seq(1, 2, 3))
+                val effect: Int < Choices = Choices.get(Seq(1, 2, 3))
                 assert(effect.handleSeqs.pure == Seq(1, 2, 3))
             }
         }
 
         "filter" - {
             "should filter" in {
-                val effect: Int < Seqs = Seqs.get(Seq(1, 2, 3))
-                val filteredEffect     = effect.filterSeqs(_ < 3)
+                val effect: Int < Choices = Choices.get(Seq(1, 2, 3))
+                val filteredEffect        = effect.filterChoices(_ < 3)
                 assert(filteredEffect.handleSeqs.pure == Seq(1, 2))
             }
         }
 
         "convert" - {
             "should convert seqs to options, constructing Some from Seq#head" in {
-                val failure: Int < Seqs           = Seqs.get(Nil)
-                val failureOptions: Int < Options = failure.seqsToOptions
+                val failure: Int < Choices        = Choices.get(Nil)
+                val failureOptions: Int < Options = failure.choicesToOptions
                 val handledFailureOptions         = Options.run(failureOptions)
                 assert(handledFailureOptions.pure == None)
-                val success: Int < Seqs           = Seqs.get(Seq(1, 2, 3))
-                val successOptions: Int < Options = success.seqsToOptions
+                val success: Int < Choices        = Choices.get(Seq(1, 2, 3))
+                val successOptions: Int < Options = success.choicesToOptions
                 val handledSuccessOptions         = Options.run(successOptions)
                 assert(handledSuccessOptions.pure == Some(1))
             }
 
             "should convert seqs to aborts, constructing Right from Seq#head" in {
-                val failure: Int < Seqs                 = Seqs.get(Nil)
-                val failureAborts: Int < Aborts[String] = failure.seqsToAborts("failure")
+                val failure: Int < Choices              = Choices.get(Nil)
+                val failureAborts: Int < Aborts[String] = failure.choicesToAborts("failure")
                 val handledFailureAborts                = Aborts[String].run(failureAborts)
                 assert(handledFailureAborts.pure == Left("failure"))
-                val success: Int < Seqs                 = Seqs.get(Seq(1, 2, 3))
-                val successAborts: Int < Aborts[String] = success.seqsToAborts("failure")
+                val success: Int < Choices              = Choices.get(Seq(1, 2, 3))
+                val successAborts: Int < Aborts[String] = success.choicesToAborts("failure")
                 val handledSuccessAborts                = Aborts[String].run(successAborts)
                 assert(handledSuccessAborts.pure == Right(1))
             }
 
-            "should convert seqs to throwable aborts, constructing Right from Seq#head" in {
-                val failure: Int < Seqs                    = Seqs.get(Nil)
-                val failureAborts: Int < Aborts[Throwable] = failure.seqsToThrowable
+            "should convert choices to throwable aborts, constructing Right from Seq#head" in {
+                val failure: Int < Choices                 = Choices.get(Nil)
+                val failureAborts: Int < Aborts[Throwable] = failure.choicesToThrowable
                 val handledFailureAborts                   = Aborts[Throwable].run(failureAborts)
                 assert(handledFailureAborts.pure.left.toOption.get.getMessage.contains(
                     "head of empty list"
                 ))
-                val success: Int < Seqs                    = Seqs.get(Seq(1, 2, 3))
-                val successAborts: Int < Aborts[Throwable] = success.seqsToThrowable
+                val success: Int < Choices                 = Choices.get(Seq(1, 2, 3))
+                val successAborts: Int < Aborts[Throwable] = success.choicesToThrowable
                 val handledSuccessAborts                   = Aborts[Throwable].run(successAborts)
                 assert(handledSuccessAborts.pure == Right(1))
             }
 
-            "should convert seqs to unit aborts, constructing Right from Seq#head" in {
-                val failure: Int < Seqs               = Seqs.get(Nil)
-                val failureAborts: Int < Aborts[Unit] = failure.seqsToUnit
+            "should convert choices to unit aborts, constructing Right from Seq#head" in {
+                val failure: Int < Choices            = Choices.get(Nil)
+                val failureAborts: Int < Aborts[Unit] = failure.choicesToUnit
                 val handledFailureAborts              = Aborts[Unit].run(failureAborts)
                 assert(handledFailureAborts.pure == Left(()))
-                val success: Int < Seqs               = Seqs.get(Seq(1, 2, 3))
-                val successAborts: Int < Aborts[Unit] = success.seqsToUnit
+                val success: Int < Choices            = Choices.get(Seq(1, 2, 3))
+                val successAborts: Int < Aborts[Unit] = success.choicesToUnit
                 val handledSuccessAborts              = Aborts[Unit].run(successAborts)
                 assert(handledSuccessAborts.pure == Right(1))
             }
@@ -152,17 +152,7 @@ class seqsTest extends ZiKyoTest:
                 assert(result == ())
                 assert(state == 55)
             }
-
-            "should iterate using traverseSeqs" in {
-                var state   = 0
-                val effects = (1 to 10).map(i => IOs { state += i; state })
-                val effect  = KYO.traverseSeqs(effects)
-                assert(state == 0)
-                val result = IOs.run(Seqs.run(effect)).pure
-                assert(result == Seq(1, 3, 6, 10, 15, 21, 28, 36, 45, 55))
-                assert(state == 55)
-            }
         }
     }
 
-end seqsTest
+end choicesTest

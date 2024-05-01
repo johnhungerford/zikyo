@@ -95,30 +95,30 @@ class abortsTest extends ZiKyoTest:
                 assert(handledSuccessAborts.pure == Right(Some(23)))
             }
 
-            "should convert all aborts to seqs" in {
+            "should convert all aborts to choices" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
                     Aborts[String | Boolean | Int | Double].fail("failure")
-                val failureSeqs: Int < Seqs = failure.abortsToSeqs
-                val handledFailureSeqs      = Seqs.run(failureSeqs)
+                val failureSeqs: Int < Choices = failure.abortsToChoices
+                val handledFailureSeqs         = Choices.run(failureSeqs)
                 assert(handledFailureSeqs.pure.isEmpty)
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
-                val successSeqs: Int < Seqs                                = success.abortsToSeqs
-                val handledSuccessSeqs                                     = Seqs.run(successSeqs)
+                val successSeqs: Int < Choices                             = success.abortsToChoices
+                val handledSuccessSeqs = Choices.run(successSeqs)
                 assert(handledSuccessSeqs.pure == Seq(23))
             }
 
             "should convert some aborts to seqs" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
                     Aborts[String].fail("failure")
-                val failureSeqs: Int < (Seqs & Aborts[Boolean | Double | Int]) =
-                    failure.someAbortsToSeqs[String]
-                val handledFailureSeqs   = Seqs.run(failureSeqs)
+                val failureSeqs: Int < (Choices & Aborts[Boolean | Double | Int]) =
+                    failure.someAbortsToChoices[String]
+                val handledFailureSeqs   = Choices.run(failureSeqs)
                 val handledFailureAborts = Aborts[Boolean | Double | Int].run(handledFailureSeqs)
                 assert(handledFailureAborts.pure == Right(Seq.empty))
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
-                val successSeqs: Int < (Seqs & Aborts[Boolean | Double | Int]) =
-                    success.someAbortsToSeqs[String]
-                val handledSuccessSeqs   = Seqs.run(successSeqs)
+                val successSeqs: Int < (Choices & Aborts[Boolean | Double | Int]) =
+                    success.someAbortsToChoices[String]
+                val handledSuccessSeqs   = Choices.run(successSeqs)
                 val handledSuccessAborts = Aborts[Boolean | Double | Int].run(handledSuccessSeqs)
                 assert(handledSuccessAborts.pure == Right(Seq(23)))
             }

@@ -1,6 +1,7 @@
 import kyo.*
 import kyo.Aborts.HasAborts
 import kyo.Envs.HasEnvs
+import kyo.core
 import scala.annotation.implicitNotFound
 import scala.annotation.tailrec
 import scala.annotation.targetName
@@ -37,14 +38,12 @@ package object zikyo:
         def collect[A, S, A1, S1](
             sequence: => Seq[A] < S
         )(
-            useElement: PartialFunction[A, A1 < (Seqs & S1)]
-        )(using Flat[A1 < (Seqs & S & S1)]): Seq[A1] < (S & S1) =
-            Seqs.run(Seqs.get(sequence).map(a => useElement.applyOrElse(a, _ => Seqs.drop)))
+            useElement: PartialFunction[A, A1 < S1]
+        )(using Flat[A1 < (S & S1)]): Seq[A1] < (S & S1) =
+            sequence.flatMap((seq: Seq[A]) => Seqs.collect(seq.collect(useElement)))
 
         def debug[S](message: => String < S): Unit < (S & IOs) =
             message.map(m => Console.default.println(m))
-
-        def dropSeqs: Nothing < Seqs = Seqs.drop
 
         def fail[E, S](error: => E < S)(using Tag[Aborts[E]]): Nothing < (S & Aborts[E]) =
             error.map(e => Aborts[E].fail(e))
@@ -52,15 +51,15 @@ package object zikyo:
         def foreach[A, S, A1, S1](
             sequence: => Seq[A] < S
         )(
-            useElement: A => A1 < (S1 & Seqs)
-        )(using Flat[A1 < (Seqs & S & S1)]): Seq[A1] < (S & S1) =
-            Seqs.run(Seqs.get(sequence).map(useElement))
+            useElement: A => A1 < S1
+        )(using Flat[A1 < (S & S1)]): Seq[A1] < (S & S1) =
+            collect(sequence)(a => useElement(a))
 
         def foreachDiscard[A, S, S1](
             sequence: => Seq[A] < S
         )(
             useElement: A => Any < S1
-        )(using Flat[Any < (Seqs & S & S1)]): Unit < (S & S1) =
+        )(using Flat[Any < (S & S1)]): Unit < (S & S1) =
             foreach(sequence)(useElement).unit
 
         def foreachPar[A, S, A1](
@@ -93,8 +92,8 @@ package object zikyo:
         def fromOption[A, S](option: => Option[A] < S): A < (S & Options) =
             Options.get(option)
 
-        def fromSeq[A, S](sequence: => Seq[A] < S): A < (S & Seqs) =
-            Seqs.get(sequence)
+        def fromSeq[A, S](sequence: => Seq[A] < S): A < (S & Choices) =
+            sequence.flatMap(seq => Choices.get(seq))
 
         def fromTry[A, S](_try: => scala.util.Try[A] < S): A < (S & Aborts[Throwable]) =
             _try.map(t => Aborts[Throwable].get(t.toEither))
@@ -181,39 +180,28 @@ package object zikyo:
             IOs(Aborts[Throwable].catching(effect))
 
         def traverse[A, S, S1](
-            sequence: => Seq[A < (S & Seqs)] < S1
-        )(using Flat[A < (S & Seqs)]): Seq[A] < (S & S1) =
-            Seqs.run(traverseSeqs(sequence))
+            sequence: => Seq[A < S] < S1
+        )(using Flat[A < S]): Seq[A] < (S & S1) =
+            sequence.flatMap((seq: Seq[A < S]) => Seqs.collect(seq))
 
         def traverseDiscard[A, S, S1](
-            sequence: => Seq[A < (S & Seqs)] < S1
-        )(using Flat[A < (S & Seqs)]): Unit < (S & S1) =
-            val seqEffect: Nothing < (S & S1 & Seqs) = traverseSeqs(sequence) *> KYO.dropSeqs
-            Seqs.run(seqEffect).discard
+            sequence: => Seq[A < S] < S1
+        )(using Flat[A < S]): Unit < (S & S1) =
+            sequence.flatMap { (seq: Seq[A < S]) =>
+                Seqs.collect(seq.map(_.map(_ => ()))).unit
+            }
         end traverseDiscard
 
-        def traverseSeqs[A, S, S1](
-            sequence: => Seq[A < (S & Seqs)] < S1
-        )(using Flat[A < (S & Seqs)]): A < (S & S1 & Seqs) =
-            Seqs.get[A < (S & Seqs), S1](sequence).flatten
-
-        def traverseEachSeqs[A, S](
-            each: => (A < (S & Seqs))*
-        )(using Flat[A < (S & Seqs)]): A < (S & Seqs) =
-            Seqs.get[A < (S & Seqs), Any](each).flatten
-
         def traversePar[A, S](
-            sequence: => Seq[A < (Fibers & Seqs)] < S
-        )(using Flat[A < (S & Seqs)]): Seq[A] < (S & Fibers) =
-            sequence.map(seq => foreachPar(seq.map(eff => Seqs.run(eff)))(identity).map(_.flatten))
+            sequence: => Seq[A < Fibers] < S
+        )(using Flat[A < S]): Seq[A] < (S & Fibers) =
+            sequence.map(seq => foreachPar(seq)(identity))
 
         def traverseParDiscard[A, S](
-            sequence: => Seq[A < (Fibers & Seqs)] < S
-        )(using Flat[A < (S & Seqs)]): Unit < (S & Fibers) =
+            sequence: => Seq[A < Fibers] < S
+        )(using Flat[A < S]): Unit < (S & Fibers) =
             sequence.map(seq =>
-                foreachPar(seq.map(eff => Seqs.run(eff)))(identity).map(
-                    _.flatten
-                ).discard
+                foreachPar(seq.map(_.discard))(identity).discard
             )
     end KYO
 
@@ -360,21 +348,21 @@ package object zikyo:
         ): A < (S & ha.Remainder & Options) =
             Aborts[E1].run(effect).map(e => Options.get(e.toOption))
 
-        def abortsToSeqs(
+        def abortsToChoices(
             using
             Tag[Aborts[E]],
             ClassTag[E],
-            Flat[A < (S & Seqs)]
-        ): A < (S & Seqs) =
-            Aborts[E].run(effect).map(e => Seqs.get(e.toOption.toList))
+            Flat[A < (S & Choices)]
+        ): A < (S & Choices) =
+            Aborts[E].run(effect).map(e => Choices.get(e.toOption.toList))
 
-        def someAbortsToSeqs[E1: Tag: ClassTag](
+        def someAbortsToChoices[E1: Tag: ClassTag](
             using
             ha: HasAborts[E1, E],
             t: Tag[Aborts[E1]],
             f: Flat[A < (S & Aborts[E])]
-        ): A < (S & ha.Remainder & Seqs) =
-            Aborts[E1].run(effect).map(e => Seqs.get(e.toOption.toList))
+        ): A < (S & ha.Remainder & Choices) =
+            Aborts[E1].run(effect).map(e => Choices.get(e.toOption.toList))
 
         def handleAborts(
             using
@@ -521,8 +509,8 @@ package object zikyo:
         def optionsToUnit(using Flat[A]): A < (S & Aborts[Unit]) =
             effect.optionsToAborts(())
 
-        def optionsToSeqs(using Flat[A]): A < (S & Seqs) =
-            Options.run(effect).map(aOpt => Seqs.get(aOpt.toSeq))
+        def optionsToChoices(using Flat[A]): A < (S & Choices) =
+            Options.run(effect).map(aOpt => Choices.get(aOpt.toSeq))
     end extension
 
     extension [A, S, E](effect: A < (S & Envs[E]))
@@ -543,30 +531,30 @@ package object zikyo:
             ProvideAsPartiallyApplied(effect)
     end extension
 
-    extension [A, S](effect: A < (S & Seqs))
-        def filterSeqs[S1](fn: A => Boolean < S1): A < (S & S1 & Seqs) =
-            effect.map(a => Seqs.filter(fn(a)).as(a))
+    extension [A, S](effect: A < (S & Choices))
+        def filterChoices[S1](fn: A => Boolean < S1): A < (S & S1 & Choices) =
+            effect.map(a => Choices.filter(fn(a)).as(a))
 
-        def handleSeqs(using Flat[A < (S & Seqs)]): Seq[A] < S = Seqs.run(effect)
+        def handleSeqs(using Flat[A < (S & Choices)]): Seq[A] < S = Choices.run(effect)
 
-        def seqsToOptions(using Flat[A < (S & Seqs)]): A < (S & Options) =
-            Seqs.run(effect).map(seq => Options.get(seq.headOption))
+        def choicesToOptions(using Flat[A < (S & Choices)]): A < (S & Options) =
+            Choices.run(effect).map(seq => Options.get(seq.headOption))
 
-        def seqsToAborts[E, S1](error: => E < S1)(
+        def choicesToAborts[E, S1](error: => E < S1)(
             using
-            Flat[A < (S & Seqs)],
+            Flat[A < (S & Choices)],
             Tag[Aborts[E]]
         ): A < (S & S1 & Aborts[E]) =
-            Seqs.run(effect).map {
+            Choices.run(effect).map {
                 case s if s.isEmpty => KYO.fail[E, S1](error)
                 case s              => s.head
             }
 
-        def seqsToThrowable(using Flat[A]): A < (S & Aborts[Throwable]) =
-            seqsToAborts[Throwable, Any](new NoSuchElementException("head of empty list"))
+        def choicesToThrowable(using Flat[A]): A < (S & Aborts[Throwable]) =
+            choicesToAborts[Throwable, Any](new NoSuchElementException("head of empty list"))
 
-        def seqsToUnit(using Flat[A]): A < (S & Aborts[Unit]) =
-            seqsToAborts(())
+        def choicesToUnit(using Flat[A]): A < (S & Aborts[Unit]) =
+            choicesToAborts(())
     end extension
 
     extension [A, S](effect: A < (S & Fibers))

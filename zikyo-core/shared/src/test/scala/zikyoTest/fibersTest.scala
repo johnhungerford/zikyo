@@ -47,9 +47,9 @@ class fibersTest extends ZiKyoTest:
             }
 
             "should construct from traversePar" in {
-                val effect = KYO.traversePar(Seq(IOs(1), IOs(2), IOs(Seqs.get(Seq(3, 4, 5)))))
+                val effect        = KYO.traversePar(Seq(IOs(1), IOs(2), IOs(3)))
                 val handledEffect = IOs.run(Fibers.run(effect).map(_.toFuture)).pure
-                handledEffect.map(v => assert(v == Seq(1, 2, 3, 4, 5)))
+                handledEffect.map(v => assert(v == Seq(1, 2, 3)))
             }
 
             "should generate a fiber that doesn't complete using never" in {
