@@ -70,13 +70,13 @@ class optionsTest extends ZiKyoTest:
             }
 
             "should convert options to seqs" in {
-                val failure: Int < Options  = Options.empty
-                val failureSeqs: Int < Seqs = failure.optionsToSeqs
-                val handledFailureSeqs      = Seqs.run(failureSeqs)
+                val failure: Int < Options     = Options.empty
+                val failureSeqs: Int < Choices = failure.optionsToChoices
+                val handledFailureSeqs         = Choices.run(failureSeqs)
                 assert(handledFailureSeqs.pure.isEmpty)
-                val success: Int < Options  = 23
-                val successSeqs: Int < Seqs = success.optionsToSeqs
-                val handledSuccessSeqs      = Seqs.run(successSeqs)
+                val success: Int < Options     = 23
+                val successSeqs: Int < Choices = success.optionsToChoices
+                val handledSuccessSeqs         = Choices.run(successSeqs)
                 assert(handledSuccessSeqs.pure == Seq(23))
             }
         }

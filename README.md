@@ -88,7 +88,7 @@ IOs.run {                                                 // Handles IOs
 
 ### Failure conversions
 
-One notable departure from the ZIO API worth calling out is a set of combinators for converting between failure effects. Whereas ZIO has a single channel for describing errors, Kyo has at least three different effect types that can describe failure in the basic sense of "short-circuiting": `Aborts`, `Options`, and `Seqs` (an empty `Seq` being equivalent to a short-circuit). It's useful to be able to move between these effects easily, so ZiKyo provides a number of extension methods, usually in the form of `def effect1ToEffect2`.
+One notable departure from the ZIO API worth calling out is a set of combinators for converting between failure effects. Whereas ZIO has a single channel for describing errors, Kyo has at least three different effect types that can describe failure in the basic sense of "short-circuiting": `Aborts`, `Options`, and `Choices` (an empty `Seq` being equivalent to a short-circuit). It's useful to be able to move between these effects easily, so ZiKyo provides a number of extension methods, usually in the form of `def effect1ToEffect2`.
 
 Some examples:
 
@@ -99,10 +99,10 @@ val abortsEffect: Int < Aborts[String] = ???
 val optionsEffect: Int < Options = abortsEffect.abortsToOptions
 
 // Converts option to Seq of length 1
-val seqsEffect: Int < Seqs = optionsEffect.optionsToSeqs
+val seqsEffect: Int < Choices = optionsEffect.optionsToChoices
 
 // Fails with Nil#head exception if empty and succeeds with Seq.head if non-empty
-val newAbortsEffect: Int < Aborts[Throwable] = seqsEffect.seqsToThrowable
+val newAbortsEffect: Int < Aborts[Throwable] = seqsEffect.choicesToThrowable
 
 // Throws a throwable Aborts failure
 val unsafeEffect: Int < Any = newAbortsEffect.implicitThrowable
@@ -110,20 +110,6 @@ val unsafeEffect: Int < Any = newAbortsEffect.implicitThrowable
 // Catch any thrown exceptions
 val safeEffect: Int < Aborts[Throwable] = unsafeEffect.explicitThrowable
 ```
-
-### Iteration
-
-ZIO has a number of methods for iterating over collections. While ZiKyo reproduces some of these, the recommended approach for sequential (i.e., non-parallel) iteration is to use the `Seqs` effect, lifting any collection you want to iterate over via `KYO.fromSeq` or `KYO.traverseSeqs` (if the elements of `Seq` are effects).
-
-```scala 3
-// ZIO style
-val zioEffect = KYO.foreach(0 to 100)(i => Consoles.println(i))
-
-// Kyo style
-val kyoEffect = KYO.fromSeq(0 to 100).flatMap(i => Consoles.println(i))
-```
-
-Leveraging Kyo's `Seqs` effect allows greater control over composing and handling sequential effects. It should be taken advantage of where possible.
 
 ### Dependency injection
 

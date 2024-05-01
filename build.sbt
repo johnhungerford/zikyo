@@ -16,14 +16,14 @@ val compilerOptions = Seq(
     // "-Vprofile",
 )
 
-val kyoVersion = "0.9.1"
+val kyoVersion = "0.9.2"
 
 scalaVersion                       := scala3Version
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeProfileName                := "io.github.johnhungerford"
 sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
 
-publish / skip                     := true
+publish / skip := true
 
 lazy val `zikyo-settings` = Seq(
     fork               := true,
@@ -31,8 +31,8 @@ lazy val `zikyo-settings` = Seq(
     crossScalaVersions := List(scala3Version),
     scalacOptions ++= compilerOptions,
     scalafmtOnCompile := true,
-    organization := "io.github.johnhungerford",
-    organizationName := "johnhungerford",
+    organization      := "io.github.johnhungerford",
+    organizationName  := "johnhungerford",
     homepage          := Some(url("https://getkyo.io")),
     licenses          := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     developers := List(
@@ -50,7 +50,7 @@ lazy val `zikyo-settings` = Seq(
     ThisBuild / versionScheme := Some("early-semver"),
     scalacOptions ++= Seq("-release:11"),
     Test / javaOptions += "--add-opens=java.base/java.lang=ALL-UNNAMED",
-    libraryDependencies += "io.getkyo" %%% "kyo-core" % kyoVersion,
+    libraryDependencies += "io.getkyo" %%% "kyo-core" % kyoVersion
 )
 
 lazy val skipPublish = Seq(
@@ -58,21 +58,21 @@ lazy val skipPublish = Seq(
     publish / skip                         := true,
     Compile / packageBin / publishArtifact := false,
     Compile / packageDoc / publishArtifact := false,
-    Compile / packageSrc / publishArtifact := false,
+    Compile / packageSrc / publishArtifact := false
 )
 
 lazy val zikyo =
     crossProject(JVMPlatform)
         .in(file("."))
         .settings(
-            name                                   := "zikyo",
-            organization                           := "io.github.johnhungerford",
-            scalaVersion                           := scala3Version,
+            name         := "zikyo",
+            organization := "io.github.johnhungerford",
+            scalaVersion := scala3Version,
             skipPublish,
             `zikyo-settings`
         ).aggregate(
             `zikyo-core`,
-            `zikyo-examples`,
+            `zikyo-examples`
         )
 
 lazy val `zikyo-core` =
@@ -82,10 +82,9 @@ lazy val `zikyo-core` =
         .in(file("zikyo-core"))
         .settings(
             `zikyo-settings`,
-			libraryDependencies += "org.scalatest" %%% "scalatest"       % "3.2.16"     % Test,
+            libraryDependencies += "org.scalatest" %%% "scalatest" % "3.2.16" % Test
         )
         .jsSettings(`js-settings`)
-
 
 lazy val `zikyo-examples` =
     crossProject(JVMPlatform)
@@ -96,16 +95,16 @@ lazy val `zikyo-examples` =
         .settings(
             Compile / doc / sources                              := Seq.empty,
             libraryDependencies += "com.softwaremill.sttp.tapir" %% "tapir-json-zio" % "1.10.0",
-            libraryDependencies += "io.getkyo" %% "kyo-direct" % kyoVersion,
-            libraryDependencies += "io.getkyo" %% "kyo-os-lib" % kyoVersion,
-            libraryDependencies += "io.getkyo" %% "kyo-tapir" % kyoVersion,
-            fork := true,
+            libraryDependencies += "io.getkyo"                   %% "kyo-direct"     % kyoVersion,
+            libraryDependencies += "io.getkyo"                   %% "kyo-os-lib"     % kyoVersion,
+            libraryDependencies += "io.getkyo"                   %% "kyo-tapir"      % kyoVersion,
+            fork                                                 := true,
             javaOptions ++= Seq(
                 "--add-opens=java.base/java.nio=ALL-UNNAMED",
-                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
+                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED"
             ),
             skipPublish,
-            `zikyo-settings`,
+            `zikyo-settings`
         )
 
 import org.scalajs.jsenv.nodejs.*
