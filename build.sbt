@@ -16,7 +16,7 @@ val compilerOptions = Seq(
     // "-Vprofile",
 )
 
-val kyoVersion = "0.9.2"
+val kyoVersion = "0.9.3"
 
 scalaVersion                       := scala3Version
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
