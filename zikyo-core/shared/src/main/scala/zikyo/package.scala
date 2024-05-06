@@ -1,12 +1,10 @@
 import kyo.*
-import kyo.Aborts.HasAborts
+//import kyo.Aborts.HasAborts
 import kyo.Envs.HasEnvs
-import kyo.core
 import scala.annotation.implicitNotFound
 import scala.annotation.tailrec
 import scala.annotation.targetName
 import scala.concurrent.Future
-import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 package object zikyo:
@@ -33,7 +31,7 @@ package object zikyo:
             yield a
 
         def attempt[A, S](effect: => A < S): A < (S & Aborts[Throwable]) =
-            Aborts[Throwable].catching(effect)
+            Aborts.catching[Throwable](effect)
 
         def collect[A, S, A1, S1](
             sequence: => Seq[A] < S
@@ -46,7 +44,7 @@ package object zikyo:
             message.map(m => Console.default.println(m))
 
         def fail[E, S](error: => E < S)(using Tag[Aborts[E]]): Nothing < (S & Aborts[E]) =
-            error.map(e => Aborts[E].fail(e))
+            error.map(e => Aborts.fail(e))
 
         def foreach[A, S, A1, S1](
             sequence: => Seq[A] < S
@@ -79,8 +77,8 @@ package object zikyo:
         def fromAutoCloseable[A <: AutoCloseable, S](closeable: => A < S): A < (S & Resources) =
             acquireRelease(closeable)(c => IOs(c.close()))
 
-        def fromEither[E, A](either: Either[E, A])(using Tag[Aborts[E]]): A < Aborts[E] =
-            Aborts[E].get(either)
+        def fromEither[E, A](either: => Either[E, A])(using Tag[Aborts[E]]): A < Aborts[E] =
+            Aborts.get(either)
 
         def fromFuture[A: Flat, S](future: => Future[A] < S): A < (S & Fibers) =
             future.map(f => Fibers.fromFuture(f))
@@ -96,7 +94,7 @@ package object zikyo:
             sequence.flatMap(seq => Choices.get(seq))
 
         def fromTry[A, S](_try: => scala.util.Try[A] < S): A < (S & Aborts[Throwable]) =
-            _try.map(t => Aborts[Throwable].get(t.toEither))
+            _try.map(t => Aborts.get(t.toEither))
 
         inline def logInfo[S](message: => String < S): Unit < (S & IOs) =
             message.map(m => Logs.info(m))
@@ -159,13 +157,13 @@ package object zikyo:
             he: HasEnvs[D, E] { type Remainder = SR },
             fl: Flat[A < (SA & Envs[E])]
         ): A < (SA & SD & SR) =
-            dependency.map(d => Envs[D].run[A, SA, E, SR](d)(effect))
+            dependency.map(d => Envs.run[D][A, SA, E, SR](d)(effect))
 
         def scoped[A, S](resource: => A < (S & Resources)): A < (IOs & S) =
             Resources.run(resource)
 
         def service[D](using Tag[Envs[D]]): D < Envs[D] =
-            Envs[D].get
+            Envs.get[D]
 
         def serviceWith[D](using Tag[Envs[D]]): [A, S] => (D => A < S) => A < (S & Envs[D]) =
             [A, S] => (fn: D => (A < S)) => service[D].map(d => fn(d))
@@ -177,7 +175,7 @@ package object zikyo:
             IOs(effect)
 
         def suspendAttempt[A, S](effect: => A < S): A < (S & IOs & Aborts[Throwable]) =
-            IOs(Aborts[Throwable].catching(effect))
+            IOs(Aborts.catching[Throwable](effect))
 
         def traverse[A, S, S1](
             sequence: => Seq[A < S] < S1
@@ -321,7 +319,7 @@ package object zikyo:
             condition.map(c => if c then effect else Options.empty)
 
         def explicitThrowable: A < (S & Aborts[Throwable]) =
-            Aborts[Throwable].catching(effect)
+            Aborts.catching[Throwable](effect)
 
         def tap[S1](f: A => Any < S1): A < (S & S1) =
             effect.map(a => f(a).as(a))
@@ -338,15 +336,15 @@ package object zikyo:
             ClassTag[E],
             Flat[A < (S & Aborts[E])]
         ): A < (S & Options) =
-            Aborts[E].run(effect).map(e => Options.get(e.toOption))
+            Aborts.run(effect).map(e => Options.get(e.toOption))
 
         def someAbortsToOptions[E1: ClassTag](
             using
-            ha: HasAborts[E1, E],
+            ha: Aborts.HasAborts[E1, E],
             t: Tag[Aborts[E1]],
             f: Flat[A < (S & Aborts[E])]
         ): A < (S & ha.Remainder & Options) =
-            Aborts[E1].run(effect).map(e => Options.get(e.toOption))
+            Aborts.run[E1](effect).map(e => Options.get(e.toOption))
 
         def abortsToChoices(
             using
@@ -354,15 +352,15 @@ package object zikyo:
             ClassTag[E],
             Flat[A < (S & Choices)]
         ): A < (S & Choices) =
-            Aborts[E].run(effect).map(e => Choices.get(e.toOption.toList))
+            Aborts.run[E](effect).map(e => Choices.get(e.toOption.toList))
 
         def someAbortsToChoices[E1: Tag: ClassTag](
             using
-            ha: HasAborts[E1, E],
+            ha: Aborts.HasAborts[E1, E],
             t: Tag[Aborts[E1]],
             f: Flat[A < (S & Aborts[E])]
         ): A < (S & ha.Remainder & Choices) =
-            Aborts[E1].run(effect).map(e => Choices.get(e.toOption.toList))
+            Aborts.run[E1](effect).map(e => Choices.get(e.toOption.toList))
 
         def handleAborts(
             using
@@ -370,15 +368,15 @@ package object zikyo:
             ClassTag[E],
             Flat[A < (S & Aborts[E])]
         ): Either[E, A] < S =
-            Aborts[E].run(effect)
+            Aborts.run[E](effect)
 
         def handleSomeAborts[E1: ClassTag](
             using
-            ha: HasAborts[E1, E],
+            ha: Aborts.HasAborts[E1, E],
             t: Tag[Aborts[E1]],
             f: Flat[A < (S & Aborts[E])]
         ): Either[E1, A] < (S & ha.Remainder) =
-            Aborts[E1].run(effect)
+            Aborts.run[E1](effect)
 
         def catchAborts[A1 >: A, S1](fn: E => A1 < S1)(
             using
@@ -386,7 +384,7 @@ package object zikyo:
             ClassTag[E],
             Flat[A < (S & Aborts[E])]
         ): A1 < (S & S1) =
-            Aborts[E].run(effect).map {
+            Aborts.run[E](effect).map {
                 case Left(e)  => fn(e)
                 case Right(a) => a
             }
@@ -397,34 +395,34 @@ package object zikyo:
             ClassTag[E],
             Flat[A < (S & Aborts[E])]
         ): A1 < (S & S1 & Aborts[E]) =
-            Aborts[E].run(effect).map {
+            Aborts.run[E](effect).map {
                 case Left(e) if fn.isDefinedAt(e) => fn(e)
-                case Left(e)                      => Aborts[E].fail(e)
+                case Left(e)                      => Aborts.fail(e)
                 case Right(a)                     => a
             }
 
         def catchSomeAborts[E1](using
             ct: ClassTag[E1],
-            ha: HasAborts[E1, E],
+            ha: Aborts.HasAborts[E1, E],
             t: Tag[Aborts[E1]],
             f: Flat[A < (S & Aborts[E])]
         ): [A1 >: A, S1] => (E1 => A1 < S1) => A1 < (S & S1 & ha.Remainder) =
             [A1 >: A, S1] =>
                 (fn: E1 => A1 < S1) =>
-                    Aborts[E1].run(effect).map {
+                    Aborts.run[E1](effect).map {
                         case Left(e1) => fn(e1)
                         case Right(a) => a
                 }
 
         def catchSomeAbortsPartial[E1](using
             ct: ClassTag[E1],
-            ha: HasAborts[E1, E],
+            ha: Aborts.HasAborts[E1, E],
             t: Tag[Aborts[E1]],
             f: Flat[A < (S & Aborts[E])]
         ): [A1 >: A, S1] => PartialFunction[E1, A1 < S1] => A1 < (S & S1 & Aborts[E]) =
             [A1 >: A, S1] =>
                 (fn: PartialFunction[E1, A1 < S1]) =>
-                    Aborts[E1].run(effect).map {
+                    Aborts.run[E1](effect).map {
                         case Left(e1) if fn.isDefinedAt(e1) => fn(e1)
                         case Left(e1)                       => Aborts[E1].fail(e1)
                         case Right(a)                       => a
@@ -440,13 +438,13 @@ package object zikyo:
             ClassTag[A],
             Flat[A < (S & Aborts[E])]
         ): E < (S & Aborts[A]) =
-            val handled = handleAborts
+            val handled = effect.handleAborts
             handled.map((v: Either[E, A]) => Aborts[A].get(v.swap))
         end swapAborts
 
         def swapSomeAborts[E1: ClassTag](
             using
-            ha: HasAborts[E1, E],
+            ha: Aborts.HasAborts[E1, E],
             te: Tag[Aborts[E]],
             ta: Tag[Aborts[A]],
             te1: Tag[Aborts[E1]],
@@ -454,16 +452,16 @@ package object zikyo:
             cta: ClassTag[A],
             f: Flat[A < (S & Aborts[E])]
         ): E1 < (S & ha.Remainder & Aborts[A]) =
-            val handled = Aborts[E1].run(effect)
+            val handled = Aborts.run[E1](effect)
             handled.map((v: Either[E1, A]) => Aborts[A].get(v.swap))
         end swapSomeAborts
 
         def implicitThrowable(
             using
             f: Flat[A < (S & Aborts[E])],
-            ha: HasAborts[Throwable, E]
+            ha: Aborts.HasAborts[Throwable, E]
         ): A < (S & ha.Remainder) =
-            Aborts[Throwable].run(effect).map {
+            Aborts.run[Throwable](effect).map {
                 case Right(a) => a
                 case Left(e)  => throw e
             }
@@ -520,7 +518,7 @@ package object zikyo:
             he: HasEnvs[E1, E] { type Remainder = SR },
             t: Tag[Envs[E1]]
         ): A < (S & S1 & SR) =
-            dependency.map(d => Envs[E1].run[A, S, E, SR](d)(effect))
+            dependency.map(d => Envs.run[E1][A, S, E, SR](d)(effect))
 
         def provideAs[E1](
             using
@@ -637,6 +635,6 @@ package object zikyo:
         f: Flat[A < (S & Envs[E])]
     ):
         def apply[S1](dependency: E1 < S1): A < (S & S1 & ER) =
-            dependency.map(d => Envs[E1].run(d)(effect))
+            dependency.map(d => Envs.run[E1](d)(effect))
     end ProvideAsPartiallyApplied
 end zikyo
