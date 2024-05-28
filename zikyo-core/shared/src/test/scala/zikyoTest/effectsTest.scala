@@ -71,11 +71,11 @@ class effectsTest extends ZiKyoTest:
         }
 
         "unless" in {
-            val effect = IOs("value").unless(Envs[Boolean].get)
+            val effect = IOs("value").unless(Envs.get[Boolean])
 
             def runEffect(b: Boolean) =
                 IOs.run {
-                    Envs[Boolean].run(b) {
+                    Envs.run[Boolean](b) {
                         Options.run {
                             effect
                         }

@@ -9,4 +9,6 @@ trait Source[T]:
             if n <= 0 then Nil
             else pull.flatMap(t => loop(n - 1).map(next => t :: next))
         loop(n).map(_.reverse)
+    end pullN
     def stream: Stream[Unit, T, Any]
+end Source

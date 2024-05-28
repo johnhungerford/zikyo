@@ -20,11 +20,11 @@ object User:
         def parse(userName: String): UserName < Aborts[String] =
             if UserNameRegex.matches(userName) then userName
             else
-                Aborts[String].fail(s"$userName is not a valid username. Must match $UserNameRegex")
+                Aborts.fail(s"$userName is not a valid username. Must match $UserNameRegex")
 
         def validated(dataId: String, userName: String): UserName < Aborts[ValidationError] =
             parse(userName).catchAborts(msg =>
-                Aborts[ValidationError].fail(ValidationError(dataId, msg))
+                Aborts.fail(ValidationError(dataId, msg))
             )
     end UserName
 end User

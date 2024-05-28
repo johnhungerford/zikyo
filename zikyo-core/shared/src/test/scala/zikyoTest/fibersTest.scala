@@ -1,7 +1,6 @@
 package zikyoTest
 
 import kyo.*
-import scala.concurrent.duration.*
 import zikyo.*
 
 class fibersTest extends ZiKyoTest:
@@ -55,8 +54,8 @@ class fibersTest extends ZiKyoTest:
             "should generate a fiber that doesn't complete using never" in {
                 val effect = KYO.never
                 runJVM {
-                    val handledEffect = IOs.run(Aborts[Throwable].run(
-                        Aborts[Throwable].catching(Fibers.runAndBlock(1.second)(effect))
+                    val handledEffect = IOs.run(Aborts.run[Throwable](
+                        Aborts.catching[Throwable](Fibers.runAndBlock(1.seconds)(effect))
                     ))
                     assert(handledEffect.pure match
                         case Left(Fibers.Interrupted) => true
@@ -85,19 +84,19 @@ class fibersTest extends ZiKyoTest:
 
             "should construct from type and use" in {
                 val effect = KYO.serviceWith[String](_.length)
-                assert(Envs[String].run("value")(effect).pure == 5)
+                assert(Envs.run[String]("value")(effect).pure == 5)
             }
         }
 
         "handle" - {
             "should provide" in {
-                val effect: Int < Envs[String] = Envs[String].get.map(_.length)
+                val effect: Int < Envs[String] = Envs.get[String].map(_.length)
                 assert(effect.provide("value").pure == 5)
             }
 
             "should provide incrementally" in {
                 val effect: Int < Envs[String & Int & Boolean & Char] =
-                    Envs[String].get *> Envs[Int].get *> Envs[Boolean].get *> Envs[Char].get.as(23)
+                    Envs.get[String] *> Envs.get[Int] *> Envs.get[Boolean] *> Envs.get[Char].as(23)
                 val handled =
                     effect
                         .provide('c')

@@ -36,36 +36,36 @@ class optionsTest extends ZiKyoTest:
             "should convert options to aborts" in {
                 val failure: Int < Options              = Options.empty
                 val failureAborts: Int < Aborts[String] = failure.optionsToAborts("failure")
-                val handledFailureAborts                = Aborts[String].run(failureAborts)
+                val handledFailureAborts                = Aborts.run[String](failureAborts)
                 assert(handledFailureAborts.pure == Left("failure"))
                 val success: Int < Options              = 23
                 val successAborts: Int < Aborts[String] = success.optionsToAborts("failure")
-                val handledSuccessAborts                = Aborts[String].run(successAborts)
+                val handledSuccessAborts                = Aborts.run[String](successAborts)
                 assert(handledSuccessAborts.pure == Right(23))
             }
 
             "should convert options to throwable aborts" in {
                 val failure: Int < Options                 = Options.empty
                 val failureAborts: Int < Aborts[Throwable] = failure.optionsToThrowable
-                val handledFailureAborts                   = Aborts[Throwable].run(failureAborts)
+                val handledFailureAborts                   = Aborts.run[Throwable](failureAborts)
                 assert(handledFailureAborts.pure match
                     case Left(e: NoSuchElementException) => e.getMessage.contains("None.get")
                     case _                               => false
                 )
                 val success: Int < Options                 = 23
                 val successAborts: Int < Aborts[Throwable] = success.optionsToThrowable
-                val handledSuccessAborts                   = Aborts[Throwable].run(successAborts)
+                val handledSuccessAborts                   = Aborts.run[Throwable](successAborts)
                 assert(handledSuccessAborts.pure == Right(23))
             }
 
             "should convert options to unit aborts" in {
                 val failure: Int < Options            = Options.empty
                 val failureAborts: Int < Aborts[Unit] = failure.optionsToUnit
-                val handledFailureAborts              = Aborts[Unit].run(failureAborts)
+                val handledFailureAborts              = Aborts.run[Unit](failureAborts)
                 assert(handledFailureAborts.pure == Left(()))
                 val success: Int < Options            = 23
                 val successAborts: Int < Aborts[Unit] = success.optionsToUnit
-                val handledSuccessAborts              = Aborts[Unit].run(successAborts)
+                val handledSuccessAborts              = Aborts.run[Unit](successAborts)
                 assert(handledSuccessAborts.pure == Right(23))
             }
 

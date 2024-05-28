@@ -16,7 +16,7 @@ class choicesTest extends ZiKyoTest:
         "handle" - {
             "should handle" in {
                 val effect: Int < Choices = Choices.get(Seq(1, 2, 3))
-                assert(effect.handleSeqs.pure == Seq(1, 2, 3))
+                assert(effect.handleChoices.pure == Seq(1, 2, 3))
             }
         }
 
@@ -24,12 +24,12 @@ class choicesTest extends ZiKyoTest:
             "should filter" in {
                 val effect: Int < Choices = Choices.get(Seq(1, 2, 3))
                 val filteredEffect        = effect.filterChoices(_ < 3)
-                assert(filteredEffect.handleSeqs.pure == Seq(1, 2))
+                assert(filteredEffect.handleChoices.pure == Seq(1, 2))
             }
         }
 
         "convert" - {
-            "should convert seqs to options, constructing Some from Seq#head" in {
+            "should convert choices to options, constructing Some from Seq#head" in {
                 val failure: Int < Choices        = Choices.get(Nil)
                 val failureOptions: Int < Options = failure.choicesToOptions
                 val handledFailureOptions         = Options.run(failureOptions)
@@ -40,38 +40,38 @@ class choicesTest extends ZiKyoTest:
                 assert(handledSuccessOptions.pure == Some(1))
             }
 
-            "should convert seqs to aborts, constructing Right from Seq#head" in {
+            "should convert choices to aborts, constructing Right from Seq#head" in {
                 val failure: Int < Choices              = Choices.get(Nil)
                 val failureAborts: Int < Aborts[String] = failure.choicesToAborts("failure")
-                val handledFailureAborts                = Aborts[String].run(failureAborts)
+                val handledFailureAborts                = Aborts.run[String](failureAborts)
                 assert(handledFailureAborts.pure == Left("failure"))
                 val success: Int < Choices              = Choices.get(Seq(1, 2, 3))
                 val successAborts: Int < Aborts[String] = success.choicesToAborts("failure")
-                val handledSuccessAborts                = Aborts[String].run(successAborts)
+                val handledSuccessAborts                = Aborts.run[String](successAborts)
                 assert(handledSuccessAborts.pure == Right(1))
             }
 
             "should convert choices to throwable aborts, constructing Right from Seq#head" in {
                 val failure: Int < Choices                 = Choices.get(Nil)
                 val failureAborts: Int < Aborts[Throwable] = failure.choicesToThrowable
-                val handledFailureAborts                   = Aborts[Throwable].run(failureAborts)
+                val handledFailureAborts                   = Aborts.run[Throwable](failureAborts)
                 assert(handledFailureAborts.pure.left.toOption.get.getMessage.contains(
                     "head of empty list"
                 ))
                 val success: Int < Choices                 = Choices.get(Seq(1, 2, 3))
                 val successAborts: Int < Aborts[Throwable] = success.choicesToThrowable
-                val handledSuccessAborts                   = Aborts[Throwable].run(successAborts)
+                val handledSuccessAborts                   = Aborts.run[Throwable](successAborts)
                 assert(handledSuccessAborts.pure == Right(1))
             }
 
             "should convert choices to unit aborts, constructing Right from Seq#head" in {
                 val failure: Int < Choices            = Choices.get(Nil)
                 val failureAborts: Int < Aborts[Unit] = failure.choicesToUnit
-                val handledFailureAborts              = Aborts[Unit].run(failureAborts)
+                val handledFailureAborts              = Aborts.run[Unit](failureAborts)
                 assert(handledFailureAborts.pure == Left(()))
                 val success: Int < Choices            = Choices.get(Seq(1, 2, 3))
                 val successAborts: Int < Aborts[Unit] = success.choicesToUnit
-                val handledSuccessAborts              = Aborts[Unit].run(successAborts)
+                val handledSuccessAborts              = Aborts.run[Unit](successAborts)
                 assert(handledSuccessAborts.pure == Right(1))
             }
         }

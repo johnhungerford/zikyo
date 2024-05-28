@@ -20,11 +20,11 @@ object Event:
     def messageSendRequest(
         from: User.UserName,
         to: User.UserName,
-        message: Message,
+        message: Message
     ): MessageSendRequested < IOs =
         for
             identifier <- Message.ID.random
-            timestamp <- Clocks.now
+            timestamp  <- Clocks.now
         yield MessageSendRequested(from, to, message, identifier, timestamp)
 
     def messageSendRequestValidated(
@@ -33,10 +33,10 @@ object Event:
         message: String
     ): MessageSendRequested < (IOs & Aborts[ValidationError]) =
         for
-            fromTyped <- User.UserName.validated("sender username", from)
-            toTyped <- User.UserName.validated("recipient username", to)
+            fromTyped    <- User.UserName.validated("sender username", from)
+            toTyped      <- User.UserName.validated("recipient username", to)
             messageTyped <- Message.validated("message body", message)
-            event <- messageSendRequest(fromTyped, toTyped, messageTyped)
+            event        <- messageSendRequest(fromTyped, toTyped, messageTyped)
         yield event
 
     final case class MessageSendFailed(
@@ -51,7 +51,7 @@ object Event:
         from: User.UserName,
         to: User.UserName,
         identifier: Message.ID,
-        failureReason: String,
+        failureReason: String
     ): MessageSendFailed < IOs =
         Clocks.now.map(ts => MessageSendFailed(from, to, identifier, failureReason, ts))
 
@@ -67,7 +67,7 @@ object Event:
         from: User.UserName,
         to: User.UserName,
         message: Message,
-        identifier: Message.ID,
+        identifier: Message.ID
     ): MessageSent < IOs =
         Clocks.now.map(ts => MessageSent(from, to, message, identifier, ts))
 
@@ -79,7 +79,7 @@ object Event:
 
     def messageDeliveryFailed(
         identifier: Message.ID,
-        failureReason: String,
+        failureReason: String
     ): MessageDeliveryFailed < IOs =
         Clocks.now.map(ts => MessageDeliveryFailed(identifier, failureReason, ts))
 
@@ -108,13 +108,12 @@ object Event:
 
     def messageUpdateRequested(
         newMessage: Message,
-        messageIdentifier: Message.ID,
+        messageIdentifier: Message.ID
     ): MessageUpdateRequested < IOs =
         for
             updateIdentifier <- MessageUpdate.ID.random
-            timestamp <- Clocks.now
-        yield
-            MessageUpdateRequested(newMessage, messageIdentifier, updateIdentifier, timestamp)
+            timestamp        <- Clocks.now
+        yield MessageUpdateRequested(newMessage, messageIdentifier, updateIdentifier, timestamp)
 
     final case class MessageUpdateFailed(
         messageIdentifier: Message.ID,
@@ -126,10 +125,10 @@ object Event:
     def messageUpdateFailed(
         messageIdentifier: Message.ID,
         updateIdentifier: MessageUpdate.ID,
-        failureReason: String,
+        failureReason: String
     ): MessageUpdateFailed < IOs =
-        Clocks.now.map(
-            ts => MessageUpdateFailed(messageIdentifier, updateIdentifier, failureReason, ts)
+        Clocks.now.map(ts =>
+            MessageUpdateFailed(messageIdentifier, updateIdentifier, failureReason, ts)
         )
 
     final case class MessageUpdated(
@@ -142,7 +141,7 @@ object Event:
     def messageUpdated(
         newMessage: Message,
         messageIdentifier: Message.ID,
-        updateIdentifier: MessageUpdate.ID,
+        updateIdentifier: MessageUpdate.ID
     ): MessageUpdated < IOs =
         Clocks.now.map(ts => MessageUpdated(newMessage, messageIdentifier, updateIdentifier, ts))
 
@@ -165,7 +164,7 @@ object Event:
     def userCreateRequestedValidated(
         userName: String,
         firstName: Option[String],
-        lastName: Option[String],
+        lastName: Option[String]
     ): UserCreateRequested < (IOs & Aborts[ValidationError]) =
         for
             userNameTyped <- User.UserName.validated("new username", userName)
@@ -179,13 +178,13 @@ object Event:
     ) extends Event
 
     def userCreated(
-        newUser: User,
+        newUser: User
     ): UserCreated < IOs = Clocks.now.map(ts => UserCreated(newUser, ts))
 
     def userCreatedValidated(
         userName: String,
         firstName: Option[String],
-        lastName: Option[String],
+        lastName: Option[String]
     ): UserCreated < (IOs & Aborts[ValidationError]) =
         User.UserName.validated("new username", userName).flatMap { userNameTyped =>
             val newUser = User(userNameTyped, firstName, lastName)
@@ -207,18 +206,17 @@ object Event:
     ) extends Event
 
     def userUpdateRequested(
-        updatedUser: User,
+        updatedUser: User
     ): UserUpdateRequested < IOs =
         for
-            updateId <- UserUpdate.ID.random
+            updateId  <- UserUpdate.ID.random
             timestamp <- Clocks.now
-        yield
-            UserUpdateRequested(updatedUser, updateId, timestamp)
+        yield UserUpdateRequested(updatedUser, updateId, timestamp)
 
     def userUpdateRequestedValidated(
         userName: String,
         firstName: Option[String],
-        lastName: Option[String],
+        lastName: Option[String]
     ): UserUpdateRequested < (IOs & Aborts[ValidationError]) =
         for
             userNameTyped <- User.UserName.validated("updated username", userName)
@@ -236,11 +234,9 @@ object Event:
     def userUpdateFailed(
         userIdentifier: User.UserName,
         updateIdentifier: UserUpdate.ID,
-        failureReason: String,
+        failureReason: String
     ): UserUpdateFailed < IOs =
-        Clocks.now.map(
-            ts => UserUpdateFailed(userIdentifier, updateIdentifier, failureReason, ts)
-        )
+        Clocks.now.map(ts => UserUpdateFailed(userIdentifier, updateIdentifier, failureReason, ts))
 
     final case class UserUpdated(
         updatedUser: User,
@@ -250,7 +246,7 @@ object Event:
 
     def userUpdated(
         updatedUser: User,
-        updateIdentifier: UserUpdate.ID,
+        updateIdentifier: UserUpdate.ID
     ): UserUpdated < IOs =
         Clocks.now.map(ts => UserUpdated(updatedUser, updateIdentifier, ts))
 
@@ -270,7 +266,7 @@ object Event:
 
     def userDeleteRequested(
         userIdentifier: User.UserName,
-        deleteIdentifier: UserDelete.ID,
+        deleteIdentifier: UserDelete.ID
     ): UserDeleteRequested < IOs =
         Clocks.now.map(ts => UserDeleteRequested(userIdentifier, deleteIdentifier, ts))
 
@@ -284,7 +280,7 @@ object Event:
     def userDeleteFailed(
         userName: User.UserName,
         deleteIdentifier: UserDelete.ID,
-        failureReason: String,
+        failureReason: String
     ): UserDeleteFailed < IOs =
         Clocks.now.map(ts => UserDeleteFailed(userName, deleteIdentifier, failureReason, ts))
 
@@ -296,7 +292,7 @@ object Event:
 
     def userDeleted(
         userName: User.UserName,
-        deleteIdentifier: UserDelete.ID,
+        deleteIdentifier: UserDelete.ID
     ): UserDeleted < IOs =
         Clocks.now.map(ts => UserDeleted(userName, deleteIdentifier, ts))
 

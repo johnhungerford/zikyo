@@ -16,13 +16,12 @@ val compilerOptions = Seq(
     // "-Vprofile",
 )
 
-val kyoVersion = "0.9.3"
+val kyoVersion = "0.10.2"
 
 scalaVersion                       := scala3Version
 ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org"
 sonatypeProfileName                := "io.github.johnhungerford"
 sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local"
-
 publish / skip := true
 
 lazy val `zikyo-settings` = Seq(
@@ -46,6 +45,7 @@ lazy val `zikyo-settings` = Seq(
     ThisBuild / sonatypeCredentialHost := "s01.oss.sonatype.org",
     sonatypeRepository                 := "https://s01.oss.sonatype.org/service/local",
     sonatypeProfileName                := "io.getkyo",
+    resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots",
     Test / testOptions += Tests.Argument("-oDG"),
     ThisBuild / versionScheme := Some("early-semver"),
     scalacOptions ++= Seq("-release:11"),

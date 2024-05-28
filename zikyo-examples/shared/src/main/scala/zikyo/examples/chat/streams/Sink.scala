@@ -1,7 +1,6 @@
 package zikyo.examples.chat.streams
 
 import kyo.*
-import kyo.Stream.Done
 import zikyo.*
 
 trait Sink[T]:
@@ -11,7 +10,7 @@ trait Sink[T]:
             currentEff.flatMap(_ => push(nextValue))
         }
     def run[A, S](stream: Stream[A, T, S]): A < S
-
+end Sink
 
 object Sink:
 
@@ -19,5 +18,6 @@ object Sink:
         override def push(value: T): Unit < Fibers =
             queue.offer(value).discard
 
-
         override def run[A, S](stream: Stream[A, T, S]): A < S = ???
+    end FromChannel
+end Sink
