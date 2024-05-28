@@ -1,7 +1,6 @@
 package zikyo.examples.ledger.db
 
 import kyo.*
-import scala.concurrent.duration.*
 import zikyo.examples.ledger.*
 
 trait DB:

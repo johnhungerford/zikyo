@@ -11,44 +11,45 @@ class abortsTest extends ZiKyoTest:
             "should construct from either" in {
                 val either: Either[String, Int] = Left("failure")
                 val effect                      = KYO.fromEither(either)
-                assert(Aborts[String].run(effect) == Left("failure"))
+                assert(Aborts.run[String](effect) == Left("failure"))
             }
 
             "should construct from fail" in {
                 val effect = KYO.fail("failure")
-                assert(Aborts[String].run(effect) == Left("failure"))
+                assert(Aborts.run[String](effect) == Left("failure"))
             }
 
             "should construct from try" in {
                 val effect = KYO.fromTry(Try(throw Exception("failure")))
-                assert(Aborts[Throwable].run(effect).pure.left.toOption.get.getMessage == "failure")
+                assert(Aborts.run[Throwable](effect).pure.left.toOption.get.getMessage == "failure")
             }
 
             "should construct from a throwing block" in {
                 val effect = KYO.attempt(throw new Exception("failure"))
-                assert(Aborts[Throwable].run(effect).pure.left.toOption.get.getMessage == "failure")
+                assert(Aborts.run[Throwable](effect).pure.left.toOption.get.getMessage == "failure")
             }
 
             "should construct from a failing IO" in {
                 val effect = KYO.attempt(IOs(throw new Exception("failure")))
                 assert(IOs.run(
-                    Aborts[Throwable].run(effect)
+                    Aborts.run[Throwable](effect)
                 ).pure.left.toOption.get.getMessage == "failure")
             }
         }
 
         "handle" - {
             "should handle" in {
-                val effect1 = Aborts[String].fail("failure")
+                val effect1 = Aborts.fail[String]("failure")
+                summon[scala.reflect.ClassTag[String]]
                 assert(effect1.handleAborts.pure == Left("failure"))
 
-                val effect2 = Aborts[String].get(Right(1))
+                val effect2 = Aborts.get[Boolean, Int](Right(1))
                 assert(effect2.handleAborts.pure == Right(1))
             }
 
             "should handle incrementally" in {
                 val effect1: Int < Aborts[String | Boolean | Int | Double] =
-                    Aborts[String].fail("failure")
+                    Aborts.fail[String]("failure")
                 val handled = effect1
                     .handleSomeAborts[String]
                     .handleSomeAborts[Boolean]
@@ -59,7 +60,7 @@ class abortsTest extends ZiKyoTest:
 
             "should handle all aborts" in {
                 val effect: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String | Boolean | Int | Double].fail("failure")
+                    Aborts.fail[String | Boolean | Int | Double]("failure")
                 val handled: Either[String | Boolean | Int | Double, Int] < Any =
                     effect.handleAborts
                 assert(handled.pure == Left("failure"))
@@ -69,7 +70,7 @@ class abortsTest extends ZiKyoTest:
         "convert" - {
             "should convert all aborts to options" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String | Boolean | Int | Double].fail("failure")
+                    Aborts.fail[String | Boolean | Int | Double]("failure")
                 val failureOptions: Int < Options = failure.abortsToOptions
                 val handledFailureOptions         = Options.run(failureOptions)
                 assert(handledFailureOptions.pure == None)
@@ -81,23 +82,23 @@ class abortsTest extends ZiKyoTest:
 
             "should convert some aborts to options" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String].fail("failure")
+                    Aborts.fail[String | Boolean]("failure")
                 val failureOptions: Int < (Options & Aborts[Boolean | Double | Int]) =
                     failure.someAbortsToOptions[String]
                 val handledFailureOptions = Options.run(failureOptions)
-                val handledFailureAborts = Aborts[Boolean | Double | Int].run(handledFailureOptions)
+                val handledFailureAborts = Aborts.run[Boolean | Double | Int](handledFailureOptions)
                 assert(handledFailureAborts.pure == Right(None))
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
                 val successOptions: Int < (Options & Aborts[Boolean | Double | Int]) =
                     success.someAbortsToOptions[String]
                 val handledSuccessOptions = Options.run(successOptions)
-                val handledSuccessAborts = Aborts[Boolean | Double | Int].run(handledSuccessOptions)
+                val handledSuccessAborts = Aborts.run[Boolean | Double | Int](handledSuccessOptions)
                 assert(handledSuccessAborts.pure == Right(Some(23)))
             }
 
             "should convert all aborts to choices" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String | Boolean | Int | Double].fail("failure")
+                    Aborts.fail[String | Boolean | Int | Double]("failure")
                 val failureSeqs: Int < Choices = failure.abortsToChoices
                 val handledFailureSeqs         = Choices.run(failureSeqs)
                 assert(handledFailureSeqs.pure.isEmpty)
@@ -109,17 +110,17 @@ class abortsTest extends ZiKyoTest:
 
             "should convert some aborts to seqs" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String].fail("failure")
+                    Aborts.fail("failure")
                 val failureSeqs: Int < (Choices & Aborts[Boolean | Double | Int]) =
                     failure.someAbortsToChoices[String]
                 val handledFailureSeqs   = Choices.run(failureSeqs)
-                val handledFailureAborts = Aborts[Boolean | Double | Int].run(handledFailureSeqs)
+                val handledFailureAborts = Aborts.run[Boolean | Double | Int](handledFailureSeqs)
                 assert(handledFailureAborts.pure == Right(Seq.empty))
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
                 val successSeqs: Int < (Choices & Aborts[Boolean | Double | Int]) =
                     success.someAbortsToChoices[String]
                 val handledSuccessSeqs   = Choices.run(successSeqs)
-                val handledSuccessAborts = Aborts[Boolean | Double | Int].run(handledSuccessSeqs)
+                val handledSuccessAborts = Aborts.run[Boolean | Double | Int](handledSuccessSeqs)
                 assert(handledSuccessAborts.pure == Right(Seq(23)))
             }
         }
@@ -127,7 +128,7 @@ class abortsTest extends ZiKyoTest:
         "catch" - {
             "should catch all aborts" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String | Boolean | Double | Int].fail("failure")
+                    Aborts.fail[String | Boolean | Double | Int]("failure")
                 val handledFailure: Int < Any =
                     failure.catchAborts {
                         case "failure" => 100
@@ -145,13 +146,13 @@ class abortsTest extends ZiKyoTest:
 
             "should catch all aborts with a partial function" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String | Boolean | Double | Int].fail("failure")
+                    Aborts.fail[String | Boolean | Double | Int]("failure")
                 val caughtFailure: Int < Aborts[String | Boolean | Double | Int] =
                     failure.catchAbortsPartial {
                         case "failure" => 100
                     }
                 val handledFailure: Either[String | Boolean | Double | Int, Int] < Any =
-                    Aborts[String | Boolean | Double | Int].run(caughtFailure)
+                    Aborts.run[String | Boolean | Double | Int](caughtFailure)
                 assert(handledFailure.pure == Right(100))
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
                 val caughtSuccess: Int < Aborts[String | Boolean | Double | Int] =
@@ -159,35 +160,35 @@ class abortsTest extends ZiKyoTest:
                         case "failure" => 100
                     }
                 val handledSuccess: Either[String | Boolean | Double | Int, Int] < Any =
-                    Aborts[String | Boolean | Double | Int].run(caughtSuccess)
+                    Aborts.run[String | Boolean | Double | Int](caughtSuccess)
                 assert(handledSuccess.pure == Right(23))
             }
 
             "should catch some aborts" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String].fail("failure")
+                    Aborts.fail[String | Boolean]("failure")
                 val caughtFailure: Int < Aborts[String | Boolean | Double | Int] =
                     failure.catchSomeAborts[String](_ => 100)
                 val handledFailure: Either[String | Boolean | Double | Int, Int] < Any =
-                    Aborts[String | Boolean | Double | Int].run(caughtFailure)
+                    Aborts.run[String | Boolean | Double | Int](caughtFailure)
                 assert(handledFailure.pure == Right(100))
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
                 val caughtSuccess: Int < Aborts[String | Boolean | Double | Int] =
                     success.catchSomeAborts[String] { _ => 100 }
                 val handledSuccess: Either[String | Boolean | Double | Int, Int] < Any =
-                    Aborts[String | Boolean | Double | Int].run(caughtSuccess)
+                    Aborts.run[String | Boolean | Double | Int](caughtSuccess)
                 assert(handledSuccess.pure == Right(23))
             }
 
             "should catch some aborts with a partial function" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String | Boolean].fail("failure")
+                    Aborts.fail[String | Boolean]("failure")
                 val caughtFailure: Int < Aborts[String | Boolean | Double | Int] =
-                    failure.catchSomeAbortsPartial[String | Boolean] {
+                    failure.catchSomeAbortsPartial[String | Double] {
                         case "failure" => 100
                     }
                 val handledFailure: Either[String | Boolean | Double | Int, Int] < Any =
-                    Aborts[String | Boolean | Double | Int].run(caughtFailure)
+                    Aborts.run[String | Boolean | Double | Int](caughtFailure)
                 assert(handledFailure.pure == Right(100))
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
                 val caughtSuccess: Int < Aborts[String | Boolean | Double | Int] =
@@ -195,35 +196,35 @@ class abortsTest extends ZiKyoTest:
                         case "failure" => 100
                     }
                 val handledSuccess: Either[String | Boolean | Double | Int, Int] < Any =
-                    Aborts[String | Boolean | Double | Int].run(caughtSuccess)
+                    Aborts.run[String | Boolean | Double | Int](caughtSuccess)
                 assert(handledSuccess.pure == Right(23))
             }
         }
 
         "swap" - {
             "should swap aborts" in {
-                val failure: Int < Aborts[String]        = Aborts[String].fail("failure")
+                val failure: Int < Aborts[String]        = Aborts.fail("failure")
                 val swappedFailure: String < Aborts[Int] = failure.swapAborts
-                val handledFailure                       = Aborts[Int].run(swappedFailure)
+                val handledFailure                       = Aborts.run(swappedFailure)
                 assert(handledFailure.pure == Right("failure"))
                 val success: Int < Aborts[String]        = 23
                 val swappedSuccess: String < Aborts[Int] = success.swapAborts
-                val handledSuccess                       = Aborts[Int].run(swappedSuccess)
+                val handledSuccess                       = Aborts.run(swappedSuccess)
                 assert(handledSuccess.pure == Left(23))
             }
 
             "should swap some aborts" in {
                 val failure: Int < Aborts[String | Boolean | Double | Int] =
-                    Aborts[String].fail("failure")
+                    Aborts.fail("failure")
                 val swappedFailure: String < Aborts[Int | Boolean | Double] =
                     failure.swapSomeAborts[String]
-                val handledFailure2 = Aborts[Int | Boolean | Double].run(swappedFailure)
+                val handledFailure2 = Aborts.run[Int | Boolean | Double](swappedFailure)
                 assert(handledFailure2.pure == Right("failure"))
                 val success: Int < Aborts[String | Boolean | Double | Int] = 23
                 val swappedSuccess: String < Aborts[Boolean | Double | Int] =
                     success.swapSomeAborts[String]
-                val handledSuccess  = Aborts[Int].run(swappedSuccess)
-                val handledSuccess2 = Aborts[Boolean | Double].run(handledSuccess)
+                val handledSuccess  = Aborts.run[Int](swappedSuccess)
+                val handledSuccess2 = Aborts.run[Boolean | Double](handledSuccess)
                 assert(handledSuccess2.pure == Right(Left(23)))
             }
         }
