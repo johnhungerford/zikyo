@@ -1,3 +1,5 @@
+**NOTICE** *This project has been moved to [kyo-combinators](https://github.com/getkyo/kyo/tree/main/kyo-combinators) in the kyo repository.*
+
 # ZiKyo
 
 ### Introduction
